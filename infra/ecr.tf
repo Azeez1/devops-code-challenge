@@ -1,16 +1,18 @@
 # ECR repo for the React frontend
 resource "aws_ecr_repository" "frontend" {
-  # The actual repository name you choose must be unique in your AWS account.
-  # e.g., to match your S3 bucket prefix, use "lightfeather-frontend"
-  name                 = "lightfeather-frontend"
+  # Repository for Docker images of the React app
+  name = "lightfeather-frontend"
 
+  # Scan images on push for vulnerabilities
   image_scanning_configuration {
     scan_on_push = true
   }
+}
 
-  lifecycle_policy {
-    # Lifecycle rule: keep only the last 10 images to save space
-    lifecycle_policy_body = <<POLICY
+# Lifecycle policy for frontend images
+resource "aws_ecr_lifecycle_policy" "frontend" {
+  repository = aws_ecr_repository.frontend.name
+  policy     = <<POLICY
 {
   "rules": [
     {
@@ -26,21 +28,23 @@ resource "aws_ecr_repository" "frontend" {
   ]
 }
 POLICY
-  }
 }
 
 # ECR repo for the Express backend
 resource "aws_ecr_repository" "backend" {
-  # Use a matching naming scheme, e.g., "lightfeather-backend"
-  name                 = "lightfeather-backend"
+  # Repository for Docker images of the Express API
+  name = "lightfeather-backend"
 
+  # Scan images on push for vulnerabilities
   image_scanning_configuration {
     scan_on_push = true
   }
+}
 
-  lifecycle_policy {
-    # Lifecycle rule: keep only the last 10 images to save space
-    lifecycle_policy_body = <<POLICY
+# Lifecycle policy for backend images
+resource "aws_ecr_lifecycle_policy" "backend" {
+  repository = aws_ecr_repository.backend.name
+  policy     = <<POLICY
 {
   "rules": [
     {
@@ -56,5 +60,4 @@ resource "aws_ecr_repository" "backend" {
   ]
 }
 POLICY
-  }
 }
