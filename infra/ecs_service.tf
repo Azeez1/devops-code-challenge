@@ -1,13 +1,18 @@
-# Grab your account’s default VPC
+# ecs_service.tf
+
+# 1. Data sources for default VPC and its subnets
 data "aws_vpc" "default" {
   default = true
 }
 
-# Grab all subnet IDs in that VPC
-data "aws_subnet_ids" "default" {
-  vpc_id = data.aws_vpc.default.id
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
 }
 
+# 2. Task Definition for the React frontend
 resource "aws_ecs_task_definition" "frontend" {
   family                   = "devops-challenge-frontend"
   network_mode             = "awsvpc"
@@ -32,7 +37,7 @@ resource "aws_ecs_task_definition" "frontend" {
   ])
 }
 
-
+# 3. Service for the React frontend (public)
 resource "aws_ecs_service" "frontend" {
   name            = "frontend-service"
   cluster         = aws_ecs_cluster.this.id
@@ -41,13 +46,12 @@ resource "aws_ecs_service" "frontend" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = data.aws_subnet_ids.default.ids
+    subnets          = data.aws_subnets.default.ids
     assign_public_ip = true
-    # If you have a security group, add: security_groups = [aws_security_group.app_sg.id]
   }
 }
 
-
+# 4. Task Definition for the Express backend
 resource "aws_ecs_task_definition" "backend" {
   family                   = "devops-challenge-backend"
   network_mode             = "awsvpc"
@@ -72,7 +76,7 @@ resource "aws_ecs_task_definition" "backend" {
   ])
 }
 
-
+# 5. Service for the Express backend (internal)
 resource "aws_ecs_service" "backend" {
   name            = "backend-service"
   cluster         = aws_ecs_cluster.this.id
@@ -81,7 +85,7 @@ resource "aws_ecs_service" "backend" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = data.aws_subnet_ids.default.ids
+    subnets          = data.aws_subnets.default.ids
     assign_public_ip = false
   }
 }
