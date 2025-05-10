@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = var.tf_state_bucket
+    bucket         = "lightfeather-s3"
     key            = "infra/terraform.tfstate"
-    region         = var.aws_region
-    dynamodb_table = var.tf_state_lock_table
+    region         = "us-east-1"
+    dynamodb_table = "lightfeather-locks"
     encrypt        = true
   }
 }
