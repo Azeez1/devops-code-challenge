@@ -56,8 +56,8 @@ resource "aws_ecs_task_definition" "backend" {
   family                   = "devops-challenge-backend"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "128"
-  memory                   = "256"
+  cpu                      = "256"    # was "128"
+  memory                   = "512"    # was "256"
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
   container_definitions = jsonencode([
