@@ -10,5 +10,10 @@ COPY . .
 FROM node:16-alpine
 WORKDIR /app
 COPY --from=build /app ./
+
+# Expose the port your Express app actually listens on (8080)
 EXPOSE 8080
-CMD ["node", "dist/index.js"]  # adjust path if your entry is different
+
+# Launch the server. No trailing comment on this line.
+# And point at the real entry file (index.js, not dist/index.js)
+CMD ["node", "index.js"]
