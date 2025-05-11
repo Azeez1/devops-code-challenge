@@ -1,10 +1,9 @@
 # ecs_service.tf
 
-# 1. Data sources for default VPC and its subnets
+# Data sources for default VPC and its subnets
 data "aws_vpc" "default" {
   default = true
 }
-
 data "aws_subnets" "default" {
   filter {
     name   = "vpc-id"
@@ -12,7 +11,33 @@ data "aws_subnets" "default" {
   }
 }
 
-# 2. Task Definition for the React frontend
+# Security Group for ECS services (frontend and backend)
+resource "aws_security_group" "ecs_service_sg" {
+  name        = "ecs-service-sg"
+  description = "Allow inbound traffic to ECS services"
+  vpc_id      = data.aws_vpc.default.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Task Definition for the React frontend
 resource "aws_ecs_task_definition" "frontend" {
   family                   = "devops-challenge-frontend"
   network_mode             = "awsvpc"
@@ -37,7 +62,7 @@ resource "aws_ecs_task_definition" "frontend" {
   ])
 }
 
-# 3. Service for the React frontend (public)
+# Service for the React frontend (public)
 resource "aws_ecs_service" "frontend" {
   name            = "frontend-service"
   cluster         = aws_ecs_cluster.this.id
@@ -48,16 +73,17 @@ resource "aws_ecs_service" "frontend" {
   network_configuration {
     subnets          = data.aws_subnets.default.ids
     assign_public_ip = true
+    security_groups  = [aws_security_group.ecs_service_sg.id]
   }
 }
 
-# 4. Task Definition for the Express backend
+# Task Definition for the Express backend
 resource "aws_ecs_task_definition" "backend" {
   family                   = "devops-challenge-backend"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"    # was "128"
-  memory                   = "512"    # was "256"
+  cpu                      = "256"
+  memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
   container_definitions = jsonencode([
@@ -76,7 +102,7 @@ resource "aws_ecs_task_definition" "backend" {
   ])
 }
 
-# 5. Service for the Express backend (internal)
+# Service for the Express backend (internal/public as needed)
 resource "aws_ecs_service" "backend" {
   name            = "backend-service"
   cluster         = aws_ecs_cluster.this.id
@@ -86,6 +112,7 @@ resource "aws_ecs_service" "backend" {
 
   network_configuration {
     subnets          = data.aws_subnets.default.ids
-    assign_public_ip = false
+    assign_public_ip = true  # set true to allow direct testing; adjust as needed
+    security_groups  = [aws_security_group.ecs_service_sg.id]
   }
 }
