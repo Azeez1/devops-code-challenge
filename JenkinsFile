@@ -12,12 +12,12 @@ pipeline {
   stages {
     stage('Login to ECR') {
       steps {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
+        // Correct binding: use usernamePassword for AWS keys
+        withCredentials([usernamePassword(
           credentialsId: 'aws',
-          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]]) {
+          usernameVariable: 'AWS_ACCESS_KEY_ID',
+          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+        )]) {
           sh '''
             aws ecr get-login-password --region $AWS_REGION \
               | docker login \
@@ -29,9 +29,7 @@ pipeline {
     }
 
     stage('Checkout') {
-      steps {
-        checkout scm
-      }
+      steps { checkout scm }
     }
 
     stage('Build & Push Backend') {
