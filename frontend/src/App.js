@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 import { API_URL } from './config';
 
+const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/';
+
 function App() {
   const [successMessage, setSuccessMessage] = useState();
   const [failureMessage, setFailureMessage] = useState();
