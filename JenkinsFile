@@ -39,10 +39,10 @@ pipeline {
             docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
           '''
 
-          // Build & push frontend image with API URL baked in
+          // Build & push frontend image with API URL baked in (no cache)
           sh '''
             # Use build-arg so CRA inlines the API URL at build time
-            docker build \
+            docker build --no-cache \
               --build-arg REACT_APP_API_URL=http://44.192.74.201:8080 \
               -t frontend:${FRONTEND_TAG} \
               frontend
