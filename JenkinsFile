@@ -12,41 +12,46 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        checkout scm
+        checkout scm  // Pull latest code from GitHub
       }
     }
 
     stage('Authenticate to AWS & ECR') {
       steps {
-        // bind AWS creds for everything below
+        // Bind AWS credentials for Docker and Terraform operations
         withCredentials([usernamePassword(
           credentialsId: 'aws',
           usernameVariable: 'AWS_ACCESS_KEY_ID',
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
-          // ECR login
+          // Log in to Amazon ECR
           sh '''
             aws ecr get-login-password --region $AWS_REGION \
               | docker login \
                   --username AWS \
                   --password-stdin $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
           '''
-          
-          // Build & push backend
+
+          // Build & push backend image
           sh '''
             docker build -t backend:${BACKEND_TAG} backend
             docker tag backend:${BACKEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
             docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
           '''
 
-          // Build & push frontend
+          // Build & push frontend image with API URL baked in
           sh '''
-            docker build -t frontend:${FRONTEND_TAG} frontend
+            # Use build-arg so CRA inlines the API URL at build time
+            docker build \
+              --build-arg REACT_APP_API_URL=http://44.192.74.201:8080 \
+              -t frontend:${FRONTEND_TAG} \
+              frontend
+
             docker tag frontend:${FRONTEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/frontend:${FRONTEND_TAG}
             docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/frontend:${FRONTEND_TAG}
           '''
 
-          // Terraform apply
+          // Apply Terraform to update ECS task definitions
           dir('infra') {
             sh '''
               terraform init
@@ -56,7 +61,7 @@ pipeline {
             '''
           }
 
-          // Force ECS redeploy
+          // Force ECS services to deploy new images immediately
           sh '''
             aws ecs update-service --cluster $CLUSTER --service backend-service --force-new-deployment --region $AWS_REGION
             aws ecs update-service --cluster $CLUSTER --service frontend-service --force-new-deployment --region $AWS_REGION
@@ -67,6 +72,7 @@ pipeline {
 
     stage('Smoke Test') {
       steps {
+        // Verify frontend and backend endpoints respond successfully
         sh '''
           curl -f http://34.205.29.35/ && \
           curl -f http://44.192.74.201:8080/health
