@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import { API_URL } from './config';
 
 function App() {
   const [successMessage, setSuccessMessage] = useState();
@@ -8,7 +9,8 @@ function App() {
   useEffect(() => {
     const getId = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/';
+        // Add fallback here in case API_URL is undefined
+        const apiUrl = API_URL || 'http://localhost:8080/';
         const resp = await fetch(apiUrl);
         const data = await resp.json();
         setSuccessMessage(data.id);
@@ -17,7 +19,7 @@ function App() {
       }
     };
     getId();
-  }, []); // <-- Also added dependency array to prevent endless re-fetch
+  }, []);
 
   return (
     <div className="App">
