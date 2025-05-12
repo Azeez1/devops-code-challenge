@@ -22,30 +22,56 @@ resource "aws_ecs_task_definition" "frontend" {
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
-container_definitions = jsonencode([
-  {
-    name      = "backend"
-    image     = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
-    essential = true
-    portMappings = [{ containerPort = 8080, hostPort = 8080 }]
-    environment = [
-      # Allow CORS from your frontend’s public IP
-      { name  = "CORS_ORIGIN",      value = "http://34.205.29.35" }
-    ]
-  },
-  {
-    name      = "frontend"
-    image     = "${aws_ecr_repository.frontend.repository_url}:${var.frontend_image_tag}"
-    essential = true
-    portMappings = [{ containerPort = 80, hostPort = 80 }]
-    environment = [
-      # Tell React where to call the backend in production
-      { name  = "REACT_APP_API_URL", value = "http://44.192.74.201:8080" }
-    ]
-  }
-])
-
+  container_definitions = jsonencode([
+    {
+      name      = "frontend"
+      image     = "${aws_ecr_repository.frontend.repository_url}:${var.frontend_image_tag}"
+      essential = true
+      portMappings = [
+        { containerPort = 80, hostPort = 80, protocol = "tcp" }
+      ]
+      environment = [
+        {
+          name  = "REACT_APP_API_URL"
+          value = "http://44.192.74.201:8080"
+        }
+      ]
+    }
+  ])
 }
+
+
+# Task Definition for the Backend Express 
+resource "aws_ecs_task_definition" "backend" {
+  family                   = "devops-challenge-backend"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "backend"
+      image     = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
+      essential = true
+      portMappings = [
+        { containerPort = 8080, hostPort = 8080, protocol = "tcp" }
+      ]
+      environment = [
+        {
+          name  = "CORS_ORIGIN"
+          value = "http://34.205.29.35"
+        }
+      ]
+    }
+  ])
+}
+
+
+
+
+
 
 # Service for the React frontend (public)
 resource "aws_ecs_service" "frontend" {
