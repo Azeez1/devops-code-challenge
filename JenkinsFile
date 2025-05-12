@@ -1,0 +1,68 @@
+pipeline {
+  agent any
+
+  environment {
+    AWS_REGION   = 'us-east-1'                              // MY  region
+    ECR_ACCOUNT  = '106530302214'                           //My  AWS account
+    CLUSTER      = 'devops-challenge-cluster'               // My  your ECS cluster name
+    BACKEND_TAG  = "build-${GIT_COMMIT[0..6]}"              // My versioned tag from Git SHA
+    FRONTEND_TAG = "build-${GIT_COMMIT[0..6]}"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }                                 //  pulls from my  GitHub repo
+    }
+
+    stage('Build & Push Backend') {
+      steps {
+        sh '''
+          docker build -t backend:${BACKEND_TAG} backend                       #  Uses My ./backend/Dockerfile
+          docker tag backend:${BACKEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG} 
+          docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
+        '''
+      }
+    }
+
+    stage('Build & Push Frontend') {
+      steps {
+        sh '''
+          docker build -t frontend:${FRONTEND_TAG} frontend                   # ✓ Uses My ./frontend/Dockerfile
+          docker tag frontend:${FRONTEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/frontend:${FRONTEND_TAG}
+          docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/frontend:${FRONTEND_TAG}
+        '''
+      }
+    }
+
+    stage('Terraform Deploy') {
+      steps {
+        dir('infra') {
+          sh '''
+            terraform init
+            terraform apply -auto-approve \
+              -var="backend_image_tag=${BACKEND_TAG}" \
+              -var="frontend_image_tag=${FRONTEND_TAG}"
+          '''                                                         // Matches my infra/variables.tf
+        }
+      }
+    }
+
+    stage('Force ECS Redeploy') {
+      steps {
+        sh '''
+          aws ecs update-service --cluster $CLUSTER --service backend-service  --force-new-deployment --region $AWS_REGION
+          aws ecs update-service --cluster $CLUSTER --service frontend-service --force-new-deployment --region $AWS_REGION
+        '''                                                         // My  ECS service names
+      }
+    }
+
+    stage('Smoke Test') {
+      steps {
+        sh '''
+          curl -f http://34.205.29.35/            && \
+          curl -f http://44.192.74.201:8080/health
+        '''                                                         // Update these to the current IPs you retrieved
+      }
+    }
+  }
+}
