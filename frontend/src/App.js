@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { API_URL } from './config';
-
-const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/';
+import { API_URL } from './config';  // ✅ CRA will see this and inline it
 
 function App() {
   const [successMessage, setSuccessMessage] = useState();
@@ -11,7 +9,7 @@ function App() {
   useEffect(() => {
     const getId = async () => {
       try {
-        // Add fallback here in case API_URL is undefined
+        // ✅ fallback logic handled in App.js only
         const apiUrl = API_URL || 'http://localhost:8080/';
         const resp = await fetch(apiUrl);
         const data = await resp.json();
