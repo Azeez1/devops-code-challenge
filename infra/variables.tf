@@ -13,3 +13,13 @@ variable "tf_state_lock_table" {
   description = "Name of DynamoDB table for state locking"
   type        = string
 }
+
+variable "backend_image_tag" {
+  description = "The ECR tag for the backend image to deploy"
+  type        = string
+}
+
+variable "frontend_image_tag" {
+  description = "The ECR tag for the frontend image to deploy"
+  type        = string
+}
