@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import './App.css';
-import API_URL from './config'
 
 function App() {
-  const [successMessage, setSuccessMessage] = useState() 
-  const [failureMessage, setFailureMessage] = useState() 
+  const [successMessage, setSuccessMessage] = useState();
+  const [failureMessage, setFailureMessage] = useState();
 
   useEffect(() => {
     const getId = async () => {
       try {
-        const resp = await fetch(API_URL)
-        setSuccessMessage((await resp.json()).id)
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/';
+        const resp = await fetch(apiUrl);
+        const data = await resp.json();
+        setSuccessMessage(data.id);
+      } catch (e) {
+        setFailureMessage(e.message);
       }
-      catch(e) {
-        setFailureMessage(e.message)
-      }
-    }
-    getId()
-  })
+    };
+    getId();
+  }, []); // <-- Also added dependency array to prevent endless re-fetch
 
   return (
     <div className="App">
