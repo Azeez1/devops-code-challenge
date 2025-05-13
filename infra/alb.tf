@@ -101,3 +101,50 @@ resource "aws_s3_bucket" "lb_logs" {
 resource "random_id" "bucket_suffix" {
   byte_length = 8
 }
+
+# Add this new resource for the S3 bucket policy
+resource "aws_s3_bucket_policy" "lb_logs_policy" {
+  bucket = aws_s3_bucket.lb_logs.id # Reference the bucket created by Terraform
+
+  # Policy document from AWS documentation for enabling ALB access logs
+  # See: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html#attach-bucket-policy
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect    = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::127311923021:root" # ELB Account ID for us-east-1
+        },
+        Action    = "s3:PutObject",
+        Resource  = "${aws_s3_bucket.lb_logs.arn}/devops-challenge-lb/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+        # The prefix "devops-challenge-lb" must match the prefix in your aws_lb access_logs block.
+        # data.aws_caller_identity.current.account_id gets your current AWS account ID.
+      },
+      {
+        Effect    = "Allow",
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        },
+        Action    = "s3:PutObject",
+        Resource  = "${aws_s3_bucket.lb_logs.arn}/devops-challenge-lb/AWSLogs/${data.aws_caller_identity.current.account_id}/*",
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      },
+      {
+        Effect    = "Allow",
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        },
+        Action    = "s3:GetBucketAcl",
+        Resource  = aws_s3_bucket.lb_logs.arn
+      }
+    ]
+  })
+}
+
+# Add this data source to get your current AWS Account ID
+data "aws_caller_identity" "current" {}
