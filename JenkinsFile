@@ -45,8 +45,8 @@ pipeline {
                         # Use build-arg so CRA inlines the API URL at build time
                         # !!! IMPORTANT: This REACT_APP_API_URL should be updated to use the ALB DNS for the backend !!!
                         # For now, leaving your original value.
-                        docker build --no-cache \
-                          --build-arg REACT_APP_API_URL=http://44.192.74.201:8080 \
+                         docker build --no-cache \
+                          --build-arg REACT_APP_API_URL=http://devops-challenge-lb-958466084.us-east-1.elb.amazonaws.com:8080 \
                           -t frontend:${FRONTEND_TAG} \
                           frontend
 
