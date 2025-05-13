@@ -9,6 +9,12 @@ variable "tf_state_bucket" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "The ID of the VPC where the ALB and ECS cluster are deployed."
+  type        = string
+  default     = "vpc-07255e0202157ef09" // Set your VPC ID here
+}
+
 variable "tf_state_lock_table" {
   description = "Name of DynamoDB table for state locking"
   type        = string
