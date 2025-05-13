@@ -5,7 +5,7 @@ resource "aws_lb" "main" {
   name               = "devops-challenge-lb" # Name of the ALB
   internal           = false                 # false for internet-facing
   load_balancer_type = "application"
-  security_groups    = ["sg-0cf7c478b89e9c91c"] # <-- Use your existing SG ID here
+  security_groups = [aws_security_group.lb_sg.id] # <-- Use your existing SG ID here
   subnets            = var.public_subnets            # ALB needs to be in public subnets
 
   # Enable access logs for the ALB (optional but good practice)
