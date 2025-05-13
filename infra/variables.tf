@@ -29,3 +29,10 @@ variable "frontend_image_tag" {
   description = "The ECR tag for the frontend image to deploy"
   type        = string
 }
+variable "public_subnets" {
+  description = "A list of public subnet IDs for the ALB."
+  type        = list(string)
+  # You'll need to provide actual subnet IDs, e.g., through a .tfvars file or Jenkins
+  # Example default (REPLACE WITH YOUR ACTUAL SUBNET IDs):
+  # default = ["subnet-xxxxxxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyyyyyy"]
+}
