@@ -47,8 +47,9 @@ pipeline {
               -t frontend:${FRONTEND_TAG} \
               frontend
 
-            docker tag frontend:${FRONTEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/frontend:${FRONTEND_TAG}
-            docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/frontend:${FRONTEND_TAG}
+            # Tag and push to the 'lightfeather-frontend' ECR repository
+            docker tag frontend:${FRONTEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-frontend:${FRONTEND_TAG}
+            docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-frontend:${FRONTEND_TAG}
           '''
 
           // Apply Terraform to update ECS task definitions
