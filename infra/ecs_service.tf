@@ -30,7 +30,7 @@ resource "aws_ecs_task_definition" "frontend" {
       image     = "${aws_ecr_repository.frontend.repository_url}:${var.frontend_image_tag}"
       essential = true
       portMappings = [
-        { containerPort = 3000, hostPort = 3000, protocol = "tcp" } # Matches ALB TG
+        { containerPort = 80, hostPort = 80, protocol = "tcp" } # Matches ALB TG
       ]
       environment = [
         {
@@ -53,7 +53,7 @@ resource "aws_ecs_service" "frontend" {
   load_balancer {
     target_group_arn = aws_lb_target_group.frontend.arn
     container_name   = "frontend"
-    container_port   = 3000
+    container_port   = 80
   }
 
   network_configuration {
