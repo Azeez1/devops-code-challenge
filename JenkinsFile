@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         AWS_REGION   = 'us-east-1'
-        ECR_ACCOUNT  = '106530302214'
-        CLUSTER      = 'devops-challenge-cluster'
+        ECR_ACCOUNT  = '106530302214' // Your AWS Account ID
+        CLUSTER      = 'devops-challenge-cluster' // Your ECS Cluster name
         BACKEND_TAG  = "build-${GIT_COMMIT[0..6]}"
         FRONTEND_TAG = "build-${GIT_COMMIT[0..6]}"
     }
@@ -12,54 +12,71 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout scm  // Pull latest code from GitHub
             }
         }
 
-        stage('Authenticate to AWS & ECR') { // Corrected Stage Name to match your content
+        stage('Build, Push, & Deploy') { // I'm using the stage name from log #38, adjust if yours is different
             steps {
+                // Bind AWS credentials for Docker and Terraform operations
                 withCredentials([usernamePassword(
-                    credentialsId: 'aws',
+                    credentialsId: 'aws', // Your Jenkins credential ID for AWS
                     usernameVariable: 'AWS_ACCESS_KEY_ID',
                     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                )]) { // Opening brace for withCredentials
+                )]) {
+                    // Log in to Amazon ECR
                     sh '''
                         aws ecr get-login-password --region $AWS_REGION \
                           | docker login \
                               --username AWS \
                               --password-stdin $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
                     '''
+
+                    // Build & push backend image
                     sh '''
                         docker build --no-cache -t backend:${BACKEND_TAG} backend
+                        # Tag and push to the 'lightfeather-backend' ECR repository
                         docker tag backend:${BACKEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-backend:${BACKEND_TAG}
                         docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-backend:${BACKEND_TAG}
                     '''
+
+                    // Build & push frontend image with API URL baked in (no cache)
                     sh '''
+                        # Use build-arg so CRA inlines the API URL at build time
+                        # !!! IMPORTANT: This REACT_APP_API_URL should be updated to use the ALB DNS for the backend !!!
+                        # For now, leaving your original value.
                         docker build --no-cache \
                           --build-arg REACT_APP_API_URL=http://44.192.74.201:8080 \
                           -t frontend:${FRONTEND_TAG} \
                           frontend
+
+                        # Tag and push to the 'lightfeather-frontend' ECR repository
                         docker tag frontend:${FRONTEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-frontend:${FRONTEND_TAG}
                         docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-frontend:${FRONTEND_TAG}
                     '''
-                    dir('infra') { // Opening brace for dir
+
+                    // Apply Terraform to update ECS task definitions
+                    dir('infra') {
                         sh '''
                             terraform init
                             terraform apply -auto-approve \
                               -var="backend_image_tag=${BACKEND_TAG}" \
                               -var="frontend_image_tag=${FRONTEND_TAG}"
                         '''
-                    } // Closing brace for dir
+                    }
+
+                    // Force ECS services to deploy new images immediately
                     sh '''
                         aws ecs update-service --cluster $CLUSTER --service backend-service --force-new-deployment --region $AWS_REGION
                         aws ecs update-service --cluster $CLUSTER --service frontend-service --force-new-deployment --region $AWS_REGION
                     '''
-                } // Closing brace for withCredentials
+                }
             }
-        } // Closing brace for stage 'Authenticate to AWS & ECR'
+        }
 
         stage('Smoke Test') {
             steps {
+                // Verify frontend and backend endpoints respond successfully THROUGH THE ALB
                 sh '''
                     echo "--- Testing Frontend via ALB ---"
                     curl -fSsv http://devops-challenge-lb-958466084.us-east-1.elb.amazonaws.com/
@@ -67,7 +84,12 @@ pipeline {
                     echo "--- Testing Backend Health via ALB ---"
                     curl -fSsv http://devops-challenge-lb-958466084.us-east-1.elb.amazonaws.com:8080/health
                 '''
+                // Note: The -Ssv flags in curl provide more verbose output for errors, which can be helpful.
+                // -f makes curl fail on server errors (HTTP 4xx or 5xx)
+                // -s makes curl silent (no progress meter)
+                // -S shows errors even with -s
+                // -v provides verbose output, including headers
             }
-        } // Closing brace for stage 'Smoke Test'
+        }
     } // Closing brace for stages
 } // Closing brace for pipeline
