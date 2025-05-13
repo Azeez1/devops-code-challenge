@@ -11,11 +11,13 @@ const app = express()
 app.use(express.json())
 
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', CORS_ORIGIN)
+    // TEMPORARY FIX - HARDCODED CORS HEADER
+    res.setHeader('Access-Control-Allow-Origin', 'http://34.205.29.35');
     res.setHeader('Access-Control-Allow-Methods', 'GET')
     res.setHeader('Access-Control-Allow-Headers', '*')
     next();
 })
+
 app.get(/.*/, (req, res) => {
     console.log(`${new Date().toISOString()} GET`)
     res.json({id: ID})
