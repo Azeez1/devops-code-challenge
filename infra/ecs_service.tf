@@ -88,7 +88,7 @@ resource "aws_ecs_task_definition" "backend" {
           # This should ideally be the ALB's DNS name for the frontend,
           # e.g., "http://${aws_lb.main.dns_name}"
           # For now, using your hardcoded value.
-          value = "http://34.205.29.35"
+          value = "http://devops-challenge-lb-958466084.us-east-1.elb.amazonaws.com"
         }
       ]
     }
