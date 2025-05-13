@@ -80,6 +80,65 @@ resource "aws_lb_listener" "frontend_http" {
   }
 }
 
+
+resource "aws_security_group" "lb_sg" { // This local name "lb_sg" matches what alb.tf expects
+  name        = "devops-challenge-alb-sg"      // Name of the SG in AWS
+  description = "Security group for the Application Load Balancer"
+  vpc_id      = var.vpc_id                   // Uses the vpc_id variable you defined earlier
+
+  ingress {
+    description = "Allow HTTP from anywhere for Frontend"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow HTTP on 8080 from anywhere for Backend via ALB"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # If you plan to use HTTPS later for the ALB (port 443), you can add another ingress block:
+  # ingress {
+  #   description = "Allow HTTPS from anywhere"
+  #   from_port   = 443
+  #   to_port     = 443
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "devops-challenge-alb-sg"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Listener for HTTP traffic on port 8080 for the backend
 # This makes the backend directly accessible via the ALB on port 8080.
 # Often, for security, you might only have the frontend listener and route /api/* paths
