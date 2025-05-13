@@ -17,7 +17,7 @@ function App() {
   if (!API_URL) return <div>❗️ Missing REACT_APP_API_URL!</div>;
   if (error)       return <div>Failed to fetch: {error}</div>;
   if (!success)    return <div>Fetching…</div>;
-  return <div>{success}</div>;
+  return <div>SUCCESS {success}</div>;
 }
 
 export default App;
