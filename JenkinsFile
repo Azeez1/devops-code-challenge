@@ -35,8 +35,9 @@ pipeline {
           // Build & push backend image
           sh '''
             docker build --no-cache -t backend:${BACKEND_TAG} backend
-            docker tag backend:${BACKEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
-            docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
+            # Tag and push to the 'lightfeather-backend' ECR repository
+            docker tag backend:${BACKEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-backend:${BACKEND_TAG}
+            docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/lightfeather-backend:${BACKEND_TAG}
           '''
 
           // Build & push frontend image with API URL baked in (no cache)
