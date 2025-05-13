@@ -72,14 +72,21 @@ pipeline {
       }
     }
 
-    stage('Smoke Test') {
-      steps {
-        // Verify frontend and backend endpoints respond successfully
+stage('Smoke Test') {
+    steps {
+        // Verify frontend and backend endpoints respond successfully THROUGH THE ALB
         sh '''
-          curl -f http://34.205.29.35/ && \
-          curl -f http://44.192.74.201:8080/health
+            echo "--- Testing Frontend via ALB ---"
+            curl -fSsv http://devops-challenge-lb-958466084.us-east-1.elb.amazonaws.com/
+            
+            echo "--- Testing Backend Health via ALB ---"
+            curl -fSsv http://devops-challenge-lb-958466084.us-east-1.elb.amazonaws.com:8080/health
         '''
-      }
+        // Note: The -Ssv flags in curl provide more verbose output for errors, which can be helpful.
+        // -f makes curl fail on server errors (HTTP 4xx or 5xx)
+        // -s makes curl silent (no progress meter)
+        // -S shows errors even with -s
+        // -v provides verbose output, including headers
     }
   }
 }
