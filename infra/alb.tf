@@ -31,7 +31,7 @@ resource "aws_lb_target_group" "frontend" {
   health_check {
     enabled             = true
     path                = "/" # Health check path for the frontend
-    port                = "traffic-port" # Uses the port defined above (3000)
+    port                = 80 # Uses the port defined above (3000)
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 5
