@@ -115,12 +115,12 @@ resource "aws_ecs_service" "backend" {
 }
 
 # Data sources for default VPC (moved from the top for clarity, already present)
-# data "aws_vpc" "default" {
-#   default = true
-# }
-# data "aws_subnets" "default" {
-#   filter {
-#     name   = "vpc-id"
-#     values = [var.vpc_id] # Changed to use var.vpc_id
-#   }
-# }
+data "aws_vpc" "default" {
+  default = true
+}
+ data "aws_subnets" "default" {
+   filter {
+     name   = "vpc-id"
+     values = [var.vpc_id] # Changed to use var.vpc_id
+   }
+ }
