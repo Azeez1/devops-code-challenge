@@ -34,7 +34,7 @@ pipeline {
 
           // Build & push backend image
           sh '''
-            docker build -t backend:${BACKEND_TAG} backend
+            docker build --no-cache -t backend:${BACKEND_TAG} backend
             docker tag backend:${BACKEND_TAG} $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
             docker push $ECR_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/backend:${BACKEND_TAG}
           '''
