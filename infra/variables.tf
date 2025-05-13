@@ -30,9 +30,7 @@ variable "frontend_image_tag" {
   type        = string
 }
 variable "public_subnets" {
-  description = "A list of public subnet IDs for the ALB."
+  description = "A list of public subnet IDs for the ALB. Must be at least two from different AZs."
   type        = list(string)
-  # You'll need to provide actual subnet IDs, e.g., through a .tfvars file or Jenkins
-  # Example default (REPLACE WITH YOUR ACTUAL SUBNET IDs):
-  # default = ["subnet-xxxxxxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyyyyyy"]
+  # No default here, as it's better to provide them in terraform.tfvars
 }
