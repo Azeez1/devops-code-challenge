@@ -9,8 +9,8 @@ resource "aws_security_group" "ecs_service_sg" {
   # Ingress for Frontend (port 3000) from ALB
   ingress {
     description     = "Allow Frontend port (3000) from ALB"
-    from_port       = 3000
-    to_port         = 3000
+    from_port       = 80
+    to_port         = 80
     protocol        = "tcp"
     security_groups = [aws_security_group.lb_sg.id] # Allow traffic only from the ALB SG
   }
